@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Number Baseball Game</title>
+		<link type="text/css" rel="stylesheet" href="./css/normalize.css"></link>
+		<style type="text/css">
+			#wrap {
+				position: relative;
+				margin: 20px 30px;
+			}
+			.btn {
+				display: inline-block;
+				margin: .5em .5em 0 0;
+				padding: 0 .3em;
+				border-radius: .4em;
+				box-shadow: 0px 0px 0px 1px #000;
+				line-height: 1.6;
+				cursor: pointer;
+			}
+			.btn.noBorder {
+				box-shadow: none;
+				cursor: none;
+			}
+
+			#answerInput {
+				padding: .2em .3em;
+			}
+			#answerInput::-webkit-outer-spin-button,
+			#answerInput::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+
+			#stack {
+				position: absolute;
+				top: 0;
+				right: 0;
+				display: inline-block;
+				margin: .4em .6em;
+				padding: 0;
+				border-right: 1px solid #000;
+				border-bottom: 1px solid #000;
+				list-style-type: none;
+			}
+			#stack > li {
+				clear: both;
+				overflow: hidden;
+			}
+			#stack > li > span {
+				display: block;
+				float: left;
+				width: 1em;
+				border-left: 1px solid #000;
+				border-top: 1px solid #000;
+				padding: .2em .3em;
+				text-align: center;
+			}
+			#stack > li > span:nth-child(1) {
+				width: 3em;
+			}
+
+			#stack_header {
+				background-color: #eee;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="wrap">
+			<div id="makeRandomNumbers" class="btn">랜덤 숫자 만들기</div>
+			<input id="answerInput" type="number" min="0" max="9999">
+			<div id="answerCheckBtn" class="btn">정답 맞추기</div>
+			<div id="answerShowBtn" class="btn">정답 보기</div>
+			<ul id="stack">
+				<li id="stack_header"><span>숫자</span><span>S</span><span>B</span><span>O</span></li>
+			</ul>
+			<div id="cndViewer" class="btn noBorder"></div>
+			<div id="logs">
+
+			</div>
+		</div>
+		<script type="text/javascript">
+			'use strict';
+
+			var gameManager = {
+				rNmakingBtn: document.querySelector('#makeRandomNumbers'),
+				answerInput: document.querySelector('#answerInput'),
+				answerShowBtn: document.querySelector('#answerShowBtn'),
+				answerCheckBtn: document.querySelector('#answerCheckBtn'),
+				cndViewer: document.querySelector('#cndViewer'),
+				stack: document.querySelector('#stack'),
+				logs: document.querySelector('#logs'),
+				randomNumberArray: [], // 랜덤 번호 배열
+				ansCnt: 0, // 정답 확인 횟수
+				limitCnt: 10, // 게임 종료할 횟수
+				keyValue: { // input 값 변화시키지 않을지 여부와 그 값
+					isSame: false,
+					preValue: ''
+				}
+			};
+
+			(function() {
+				gameManager.rNmakingBtn.addEventListener('click', rNmakingBtnClick, false);
+				gameManager.answerShowBtn.addEventListener('click', answerShowBtnClick, false);
+				gameManager.answerCheckBtn.addEventListener('click', answerCheckBtnClick, false);
+				gameManager.answerInput.addEventListener('input', answerInputEvent, false);
+				gameManager.answerInput.addEventListener('keydown', answerKeydownEvent, false);
+			})();
+
+			function rNmakingBtnClick() {
+				setInit(); // 초기화
+				makeRdNumber(); // 랜덤 숫자 만들기
+				writeResults('4자리의 숫자가 만들어졌습니다.'); // 기록 남기기
+			}
+
+			function answerShowBtnClick() {
+				if (gameManager.randomNumberArray.length === 0) {
+					writeResults('랜덤 숫자를 생성하지 않았습니다.');
+				} else {
+					alert('정답: ' + gameManager.randomNumberArray.join(''));
+				}
+			}
+
+			function answerCheckBtnClick() {
+				var value;
+				gameManager.answerInput = document.querySelector('#answerInput');
+				value = answerInput.value;
+
+				if (gameManager.randomNumberArray.length === 0) {
+					writeResults('랜덤 숫자를 생성하지 않았습니다.');
+					return;
+				}
+
+				if (value.length !== 4) { // 값이 적절하지 않음
+					writeResults('입력 값이 적절하지 않습니다.'); // 기록 남기기
+					return;
+				}
+
+				if (gameManager.ansCnt === gameManager.limitCnt) {
+					writeResults(gameManager.limitCnt + '회 완료! 숫자를 다시 만드세요. 정답은 ' + gameManager.randomNumberArray.join('') + ' 입니다.'); // 기록 남기기
+					return;
+				}
+
+				// 값 변환
+				value = value.split('');
+				value = value.map(x => parseInt(x));
+				checkAnswer(value);
+			}
+
+			function makeRdNumber() {
+				var list, i, number, randomNo;
+				list = [];
+				number = [];
+
+				for (i = 0; i < 10; i++) {
+					list.push(i);
+				}
+
+				for (i = 0; i < 4; i++) {
+					randomNo = Math.floor(Math.random() * list.length);
+					number.push(list[randomNo]);
+					list.splice(randomNo, 1);
+				}
+				gameManager.randomNumberArray = number;
+			}
+
+			function writeResults(text) {
+				var pTag, textNode, rNshowBtn;
+				pTag = document.createElement('p');
+				textNode = document.createTextNode(text);
+				pTag.appendChild(textNode);
+				gameManager.logs.insertBefore(pTag, gameManager.logs.children[0]);
+			}
+
+			function checkAnswer(value) {
+				var strike, ball, i, j, eachInput, eachAnswer, inputChecked, outputText;
+				strike = 0;
+				ball = 0;
+
+				for (i = 0; i < 4; i++) {
+					inputChecked = false;
+					eachInput = value[i];
+					for (j = 0; j < 4; j++) {
+						eachAnswer = gameManager.randomNumberArray[j];
+
+						if (eachInput === eachAnswer) {
+							if (!inputChecked) {
+								inputChecked = true;
+								if (i === j) strike++;
+								else ball++;
+							}
+						}
+					}
+				}
+
+				gameManager.ansCnt++;
+				gameManager.cndViewer.innerHTML = gameManager.ansCnt + '회 진행했습니다.';
+
+				if (strike === 4) {
+					outputText = value.join('') + '가 정답입니다. 축하합니다!';
+				} else if (strike === 0) {
+					if (ball === 0) {
+						outputText = value.join('') + ' ' + ' 아웃!';
+					} else {
+						outputText = value.join('') + ' ' + ball + '볼';
+					}
+				} else {
+					if (ball === 0) {
+						outputText = value.join('') + ' ' + strike + '스트라이크';
+					} else {
+						outputText = value.join('') + ' ' + strike + '스트라이크 ' + ball + '볼';
+					}
+				}
+				setStack(value, strike, ball);
+				writeResults(outputText); // 기록 남기기
+			}
+
+			function answerInputEvent(e) {
+				var input, value;
+				input = this;
+				value = input.value;
+
+				if (value.length > 4) { // 길이가 5 이상이면 자르기
+					input.value = value.slice(0, 4);
+					writeResults('숫자의 길이는 4를 넘을 수 없습니다.'); // 기록 남기기
+				}
+
+				if (gameManager.keyValue.isSame) {
+					input.value = gameManager.keyValue.preValue;
+				}
+			}
+
+			function answerKeydownEvent(event) {
+				var key, value;
+				key = event.keyCode;
+				value = event.target.value;
+				/*
+					keyCode: key
+					27: Escape
+					13: Enter
+					37: LeftArrow
+					38: UpArrow
+					39: RightArrow
+					40: DownArrow
+				*/
+				switch (key) {
+					case 13 :
+						answerCheckBtnClick();
+						break;
+					case 27 :
+						gameManager.answerInput.value = '';
+						break;
+					case 38 : // UpArrow keydown 시 input[type="number"] 기본 동작 차단
+						gameManager.keyValue.isSame = true;
+						gameManager.keyValue.preValue = value;
+						return;
+						// break;
+					case 40 : // DownArrow keydown 시 input[type="number"] 기본 동작 차단
+						gameManager.keyValue.isSame = true;
+						gameManager.keyValue.preValue = value;
+						return;
+						// break;
+					default :
+						gameManager.keyValue.isSame = false;
+						gameManager.keyValue.preValue = null;
+						break;
+				}
+
+				key = parseInt(event.key);
+				value = value.split('');
+				value = value.map(x => parseInt(x));
+
+				var i, no;
+				for (i = 0; i < value.length; i++) {
+					no = value[i];
+					if (key === no) {
+						writeResults('같은 숫자를 입력할 수 없습니다.'); // 기록 남기기
+						gameManager.keyValue.isSame = true;
+						gameManager.keyValue.preValue = value.join('');
+						break;
+					} else {
+						gameManager.keyValue.isSame = false;
+						gameManager.keyValue.preValue = null;
+					}
+				}
+			}
+
+			function setStack(value, strike, ball) {
+				var li, out, i, span, text;
+				out = !strike && !ball ? 1 : 0;
+				li = document.createElement('li');
+				for (i = 0; i < 4; i++) {
+					span = document.createElement('span');
+					switch (i) {
+						case 0 : span.innerHTML = value.join(''); break;
+						case 1 : span.innerHTML = strike; break;
+						case 2 : span.innerHTML = ball; break;
+						case 3 : span.innerHTML = out; break;
+					}
+					li.appendChild(span);
+				}
+				gameManager.stack.appendChild(li);
+			}
+
+			function setInit() {
+				gameManager.logs.innerHTML = '';
+				gameManager.randomNumberArray = [];
+				gameManager.ansCnt = 0;
+				gameManager.answerInput.value = '';
+				gameManager.cndViewer.innerHTML = '';
+				gameManager.stack.innerHTML = gameManager.stack.children[0].outerHTML;
+			}
+
+		</script>
+	</body>
+</html>
