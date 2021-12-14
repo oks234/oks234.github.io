@@ -1,0 +1,146 @@
+body {
+  color: white;
+  line-height: 1.4;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: center / cover no-repeat;
+  z-index: -1;
+}
+
+.bg-img::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, .25);
+}
+
+main {
+  height: calc(100vh - 60px);
+}
+
+/* .clock {
+  font-size: 160px;
+} */
+
+/* .login-form,
+.greeting {
+  height: 60px;
+} */
+
+/* .login-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */
+
+/* .greeting {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+} */
+/* .greeting__pad {
+  position: relative;
+  flex: 1 0 40px;
+}
+.greeting__pad--right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.greeting__content {
+  font-size: 40px;
+} */
+.login-form,
+.greeting,
+.todo-form {
+  height: 60px;
+}
+.login-form:before,
+.greeting:before,
+.todo-form:before {
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+  width: 0;
+  height: 100%;
+}
+.greeting {
+  width: 100%;
+}
+.edit-greeting-btn {
+  display: none;
+  top: 50%;
+  left: 100%;
+  width: 160px;
+  margin-left: 20px;
+  transform: translateY(-50%);
+}
+#greeting:hover .edit-greeting-btn {
+  display: block;
+}
+
+/* .todo {
+  margin: 4px 0;
+} */
+.todo > p {
+  margin: 0;
+}
+.todo__delete-button {
+  margin-left: 8px;
+}
+.todo-list {
+  max-height: calc(100vh - 300px);
+  overflow: auto;
+}
+
+.quote {
+  position: absolute;
+  right: 0;
+  bottom: 20px;
+  left: 0;
+  padding: 0 40px;
+  text-align: center;
+}
+.quote__content {
+  margin-bottom: -0.5em;
+  transition: all 300ms;
+}
+.quote:hover .quote__content {
+  margin-bottom: 0;
+}
+.quote__content::before,
+.quote__content::after {
+  content: "\"";
+}
+.quote__author {
+  position: relative;
+  overflow: hidden;
+}
+.quote__author > div {
+  opacity: 0;
+  transform: translateY(-0.5em);
+  transition: all 300ms;
+}
+.quote:hover .quote__author > div {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.weather {
+  top: 0;
+  right: 0;
+}
